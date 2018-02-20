@@ -174,5 +174,7 @@
     <java-symbol type="string" name="trust_notification_title_onboarding" />
     <java-symbol type="string" name="trust_notification_content_onboarding" />
     <java-symbol type="string" name="trust_notification_action_later" />
+
+    <java-symbol type="array" name="config_vendorPlatformSignatures" />
 </resources>
 
