@@ -1320,6 +1320,17 @@ public final class LineageSettings {
                 sNonNullStringValidator;
 
         /**
+         * Whether to use black theme instead of dark theme
+         * 0: Disabled
+         * 1: Enabled
+         */
+        public static final String BERRY_FORCE_BLACK = "berry_force_black";
+
+        /** @hide */
+        public static final Validator BERRY_FORCE_BLACK_VALIDATOR =
+                new InclusiveIntegerRangeValidator(0, 1);
+
+        /**
          * Enable looking up of phone numbers of nearby places
          * 0 = 0ff, 1 = on
          */
@@ -2178,6 +2189,7 @@ public final class LineageSettings {
             VALIDATORS.put(PROXIMITY_ON_WAKE, PROXIMITY_ON_WAKE_VALIDATOR);
             VALIDATORS.put(BERRY_GLOBAL_STYLE, BERRY_GLOBAL_STYLE_VALIDATOR);
             VALIDATORS.put(BERRY_CURRENT_ACCENT, BERRY_CURRENT_ACCENT_VALIDATOR);
+            VALIDATORS.put(BERRY_FORCE_BLACK, BERRY_FORCE_BLACK_VALIDATOR);
             VALIDATORS.put(ENABLE_FORWARD_LOOKUP, ENABLE_FORWARD_LOOKUP_VALIDATOR);
             VALIDATORS.put(ENABLE_PEOPLE_LOOKUP, ENABLE_PEOPLE_LOOKUP_VALIDATOR);
             VALIDATORS.put(ENABLE_REVERSE_LOOKUP, ENABLE_REVERSE_LOOKUP_VALIDATOR);
