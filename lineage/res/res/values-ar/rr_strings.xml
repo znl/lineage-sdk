@@ -7,4 +7,11 @@
   <string name="accent_black">أسود</string>
   <string name="accent_brown">بنى</string>
   <string name="accent_cyan">ازرق سماوي</string>
+  <string name="accent_green">أخضر</string>
+  <string name="accent_orange">برتقالي</string>
+  <string name="accent_pink">وردي</string>
+  <string name="accent_purple">بنفسجي</string>
+  <string name="accent_red">أحمر</string>
+  <string name="accent_teal">أزرق مخضّر</string>
+  <string name="accent_yellow">أصفر</string>
 </resources>
