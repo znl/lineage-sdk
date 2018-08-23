@@ -110,6 +110,7 @@
         <item>org.lineageos.platform.internal.LineageAudioService</item>
         <item>org.lineageos.platform.internal.StyleInterfaceService</item>
         <item>org.lineageos.platform.internal.TrustInterfaceService</item>
+        <item>org.lineageos.platform.internal.LineageSettingsService</item>
     </string-array>
 
     <!-- The LineageSystemServer class that is invoked from Android's SystemServer -->
@@ -246,6 +247,11 @@
     <!-- Indicate whether encryption causes significant performances loss.
          This MUST NOT be set to true on devices produced in 2016 or later -->
     <bool name="config_trustLegacyEncryption">false</bool>
+
+     <!-- The list of vendor package signatures that should also be considered
+          platform signatures, specifically for use on devices with a vendor partition. -->
+     <string-array name="config_vendorPlatformSignatures">
+     </string-array>
 </resources>
 
 

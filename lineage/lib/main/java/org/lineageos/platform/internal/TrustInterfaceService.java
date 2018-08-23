@@ -49,12 +49,15 @@ import java.util.Date;
 /** @hide **/
 public class TrustInterfaceService extends LineageSystemService {
     private static final String TAG = "LineageTrustInterfaceService";
+
     private static final String PLATFORM_SECURITY_PATCHES = "ro.build.version.security_patch";
     private static final String VENDOR_SECURITY_PATCHES = "ro.vendor.build.security_patch";
     private static final String LINEAGE_VENDOR_SECURITY_PATCHES =
             "ro.lineage.build.vendor_security_patch";
+
     private static final String INTENT_PARTS = "org.lineageos.lineageparts.TRUST_INTERFACE";
     private static final String INTENT_ONBOARDING = "org.lineageos.lineageparts.TRUST_HINT";
+
     private static final String CHANNEL_NAME = "TrustInterface";
     private static final int ONBOARDING_NOTIFCATION_ID = 89;
 
@@ -80,22 +83,20 @@ public class TrustInterfaceService extends LineageSystemService {
     @Override
     public void onStart() {
         mNotificationManager = mContext.getSystemService(NotificationManager.class);
+
         // Onboard
         if (!hasOnboardedUser()) {
             postOnBoardingNotification();
             return;
         }
 
-        int selinuxStatus = getSELinuxStatus();
-        if (selinuxStatus != TrustInterface.TRUST_FEATURE_LEVEL_GOOD) {
-            postNotificationForFeatureInternal(TrustInterface.TRUST_FEATURE_SELINUX);
-        }
+        runTestInternal();
     }
 
     /* Public methods implementation */
 
     private boolean postNotificationForFeatureInternal(int feature) {
-        if (!hasOnboardedUser() || !userAllowsTrustNotifications()) {
+        if (!hasOnboardedUser() || !isWarningAllowed(feature)) {
             return false;
         }
 
@@ -106,16 +107,24 @@ public class TrustInterfaceService extends LineageSystemService {
 
         String title = mContext.getString(strings.first);
         String message = mContext.getString(strings.second);
-        Intent intent = new Intent(INTENT_PARTS);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        String action = mContext.getString(R.string.trust_notification_action_manage);
+
+        Intent mainIntent = new Intent(INTENT_PARTS);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent pMainIntent = PendingIntent.getActivity(mContext, 0, mainIntent, 0);
+
+        Intent actionIntent = new Intent(INTENT_PARTS);
+        actionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        actionIntent.putExtra(":settings:fragment_args_key", "trust_category_alerts");
+        PendingIntent pActionIntent = PendingIntent.getActivity(mContext, 0, actionIntent, 0);
 
         Notification.Builder notification = new Notification.Builder(mContext, CHANNEL_NAME)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new Notification.BigTextStyle().bigText(message))
                 .setAutoCancel(true)
-                .setContentIntent(pIntent)
+                .setContentIntent(pMainIntent)
+                .addAction(R.drawable.ic_trust_notification_manage, action, pActionIntent)
                 .setColor(mContext.getColor(R.color.color_error))
                 .setSmallIcon(R.drawable.ic_warning);
 
@@ -125,7 +134,7 @@ public class TrustInterfaceService extends LineageSystemService {
     }
 
     private boolean removeNotificationForFeatureInternal(int feature) {
-        if (!userAllowsTrustNotifications()) {
+        if (!isWarningAllowed(feature)) {
             return false;
         }
 
@@ -165,8 +174,22 @@ public class TrustInterfaceService extends LineageSystemService {
                 return getSecurityPatchStatus(VENDOR_SECURITY_PATCHES);
             case TrustInterface.TRUST_FEATURE_ENCRYPTION:
                 return getEncryptionStatus();
+            case TrustInterface.TRUST_FEATURE_KEYS:
+                return getKeysStatus();
             default:
                 return TrustInterface.ERROR_UNDEFINED;
+        }
+    }
+
+    private void runTestInternal() {
+        int selinuxStatus = getSELinuxStatus();
+        if (selinuxStatus != TrustInterface.TRUST_FEATURE_LEVEL_GOOD) {
+            postNotificationForFeatureInternal(TrustInterface.TRUST_WARN_SELINUX);
+        }
+
+        int keysStatus = getKeysStatus();
+        if (keysStatus != TrustInterface.TRUST_FEATURE_LEVEL_GOOD) {
+            postNotificationForFeatureInternal(TrustInterface.TRUST_WARN_PUBLIC_KEY);
         }
     }
 
@@ -177,9 +200,10 @@ public class TrustInterfaceService extends LineageSystemService {
                 "You do not have permissions to use the Trust interface");
     }
 
-    private boolean userAllowsTrustNotifications() {
-        return LineageSettings.Secure.getInt(mContext.getContentResolver(),
-                LineageSettings.Secure.TRUST_NOTIFICATIONS, 1) == 1;
+    private boolean isWarningAllowed(int warning) {
+        return (LineageSettings.Secure.getInt(mContext.getContentResolver(),
+                LineageSettings.Secure.TRUST_WARNINGS,
+                TrustInterface.TRUST_WARN_MAX_VALUE) & warning) != 0;
     }
 
     private Pair<Integer, Integer> getNotificationStringsForFeature(int feature) {
@@ -187,13 +211,17 @@ public class TrustInterfaceService extends LineageSystemService {
         int message = 0;
 
         switch (feature) {
-            case TrustInterface.TRUST_FEATURE_SELINUX:
-                title = R.string.trust_notification_title_selinux;
+            case TrustInterface.TRUST_WARN_SELINUX:
+                title = R.string.trust_notification_title_security;
                 message = R.string.trust_notification_content_selinux;
                 break;
-            case TrustInterface.TRUST_FEATURE_ROOT:
+            case TrustInterface.TRUST_WARN_ROOT:
                 title = R.string.trust_notification_title_root;
                 message = R.string.trust_notification_content_root;
+                break;
+            case TrustInterface.TRUST_WARN_PUBLIC_KEY:
+                title = R.string.trust_notification_title_security;
+                message = R.string.trust_notification_content_keys;
                 break;
         }
 
@@ -293,9 +321,22 @@ public class TrustInterfaceService extends LineageSystemService {
                 return isOldDevice ?
                         TrustInterface.TRUST_FEATURE_LEVEL_POOR :
                         TrustInterface.TRUST_FEATURE_LEVEL_BAD;
+            case DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED:
+                return TrustInterface.TRUST_FEATURE_LEVEL_BAD;
             default:
                 return TrustInterface.ERROR_UNDEFINED;
         }
+    }
+
+    private int getKeysStatus() {
+        String buildTags = SystemProperties.get("ro.build.tags");
+
+        if (buildTags.contains("test-keys")) {
+            return TrustInterface.TRUST_FEATURE_LEVEL_BAD;
+        } else if (buildTags.contains("release-keys") || buildTags.contains("dev-keys")) {
+            return TrustInterface.TRUST_FEATURE_LEVEL_GOOD;
+        }
+        return TrustInterface.ERROR_UNDEFINED;
     }
 
     private boolean hasOnboardedUser() {
@@ -340,6 +381,19 @@ public class TrustInterfaceService extends LineageSystemService {
              * No need to require permission for this one because it's harmless
              */
             return getLevelForFeatureInternal(feature);
+        }
+
+        @Override
+        public void runTest() {
+            enforceTrustPermission();
+            /*
+             * We need to clear the caller's identity in order to
+             *   allow this method call to modify settings
+             *   not allowed by the caller's permissions.
+             */
+            long token = clearCallingIdentity();
+            runTestInternal();
+            restoreCallingIdentity(token);
         }
     };
 }

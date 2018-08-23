@@ -122,6 +122,7 @@
     <java-symbol type="string" name="lineage_api_level" />
     <java-symbol type="string" name="lineage_updates" />
     <java-symbol type="string" name="lineage_version" />
+    <java-symbol type="string" name="lineage_vendor_security_patch" />
 
     <!-- General purpose use "unknown" string -->
     <java-symbol type="string" name="unknown" />
@@ -164,15 +165,19 @@
     <!-- Trust interface -->
     <java-symbol type="bool" name="config_trustLegacyEncryption" />
     <java-symbol type="drawable" name="ic_trust" />
+    <java-symbol type="drawable" name="ic_trust_notification_manage" />
     <java-symbol type="drawable" name="ic_warning" />
     <java-symbol type="string" name="trust_feature_name" />
     <java-symbol type="string" name="trust_notification_channel" />
-    <java-symbol type="string" name="trust_notification_title_selinux" />
+    <java-symbol type="string" name="trust_notification_title_security" />
     <java-symbol type="string" name="trust_notification_content_selinux" />
     <java-symbol type="string" name="trust_notification_title_root" />
     <java-symbol type="string" name="trust_notification_content_root" />
+    <java-symbol type="string" name="trust_notification_content_keys" />
     <java-symbol type="string" name="trust_notification_title_onboarding" />
     <java-symbol type="string" name="trust_notification_content_onboarding" />
-    <java-symbol type="string" name="trust_notification_action_later" />
+    <java-symbol type="string" name="trust_notification_action_manage" />
+
+    <java-symbol type="array" name="config_vendorPlatformSignatures" />
 </resources>
 
